@@ -1,0 +1,76 @@
+#!/bin/bash
+
+function isMounted() {
+	cat /proc/mounts | grep "$1" > /dev/null 2>&1
+}
+
+#
+#	1: Address
+#	2: Mount directory
+#	3: User name
+#	4: Password
+#	5: Input password (def: false)
+#	6: Input user (def: false)
+#
+function mountCifs() {
+	if $(isMounted "$1"); then
+		verbose "$1 already mounted"
+		return 0
+	fi
+
+	if [ -d "$2" ]; then
+		if [ "$(ls -A $2)" ]; then
+  			error "$2 is not Empty"
+		fi
+	else
+		sudo mkdir "$2" || error "Couldn't create dir: $2"
+	fi
+
+	local __user="$3"
+	local __pass="$4"
+
+	if [ -z "$3" ]; then
+		input __user "Input mount user name: "
+	fi
+	if [ -z "$4" ]; then
+		inputPassword __pass "Input mount password: "
+	fi
+	# if ${5:-false}; then
+	# 	inputPassword __pass "Input mount password: "
+	# else
+	# 	__pass="$4"
+	# fi
+
+	# if ${6:-false}; then
+	# 	input __user "Input mount user name: "
+	# else
+	# 	__user="$3"
+	# fi
+
+	sudo mount -t cifs -o uid=1000,gid=1000,username="$__user",password="$__pass" "$1" "$2"
+
+	if [ $? -ne 0 ]; then
+		sudo rmdir "$2"
+		return 1
+	fi
+}
+
+#
+#	1: Directory
+#	2: Force
+#
+function unmount() {
+	if ! $(isMounted "$1"); then
+		error "$1 is not mounted"
+	fi
+
+	verbose "Unmounting $1..."
+	if $2; then
+		sudo umount "$1" -l || error "Can't unmount $1"
+	else
+		sudo umount "$1" || error "Can't unmount $1"
+	fi
+	
+	verbose "Removing directory..."
+	sudo rmdir "$1"
+}

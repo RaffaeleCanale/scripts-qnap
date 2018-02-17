@@ -1,0 +1,341 @@
+#!/bin/bash
+# WARNING:
+#    Might need to install 'sudo apt-get install cifs-utils'
+#    Maybe also 'sudo apt-get install nfs-common'
+#
+# Requiered tools:
+#    ¬ wakeonlan
+function declareConstants() {
+    $1 QNAP_MAC "__MAC_ADDRESS__"
+    $1 MOUNT_DIR "__MOUNT_DIR__"
+    $1 ADDRESS "__ADDRESS__"
+    $1 SYNC_CONFIG_FILE "__SYNC_CONFIG_FILE__"
+}
+
+function printHelp() {
+    cat << EOF
+
+    Utility methods for the QNAP NAS system.
+
+    ${PROGNAME} `echoBlue mount` `echoViolet domains` `echoGreen "-l"`
+        Mount the given domain at ${MOUNT_DIR}/QNAP_domain.
+        The domain password will be prompt unless the -l option is used.
+
+        $(echoGreen "-l"): Use the 'lastpass' script in order to automatically
+            find the QNAP admin password.
+
+    ${PROGNAME} `echoBlue umount` `echoViolet "</domain>"` `echoGreen "-f"`
+        Unmount the given domain (or all the mounted domains if none specified)
+
+        $(echoGreen "-f"): Force unmount
+
+    ${PROGNAME} `echoBlue wake`
+        Send a magic packet to NAS for the Wake-On-Lan function.
+        Works only if on the same subnet as the QNAP NAS.
+
+    ${PROGNAME} `echoBlue web`
+        Open the QNAP web interface.
+
+    ${PROGNAME} `echoBlue download` `echoViolet "<file>"`
+        Download a specific file using an HTTP request
+
+    ${PROGNAME} `echoBlue status`
+        List all the mounted domains.
+
+    ${PROGNAME} `echoBlue config`
+        Edit the synchronisation configuration file.
+        The configuration file defines an equivalence between a local directory
+        and a NAS domain. Then, the 'qnap pull/push' can be used to synchronize
+        those directories.
+
+        The syntax is as follows:
+
+            <local directory>$<domain>
+
+        Note that the local directory must not contain a $ symbol
+
+    ${PROGNAME} `echoBlue pull` `echoViolet "</directory>"` `echoGreen "-d -l"`
+        For the given directory, copies all the correspondent files from the NAS to
+        given local directory. The correspondent NAS domain is automatically mounted
+        if needed.
+
+        In order to find the correspondent NAS directory, this uses the synchronization
+        configuration file, see 'qnap config'.
+
+        $(echoGreen "-d"): Delete all local files not present in the NAS
+        $(echoGreen "-l"): Use the 'lastpass' script in order to automatically
+            find the QNAP admin password.
+
+    ${PROGNAME} `echoBlue push` `echoViolet "</directory>"` `echoGreen "-d -l"`
+        For the given directory, copies all the files in the given local directory to
+        the correspondent directory on the NAS.
+        The correspondent NAS domain is automatically mounted if needed.
+
+        In order to find the correspondent NAS directory, this uses the synchronization
+        configuration file, see 'qnap config'.
+
+        $(echoGreen "-d"): Delete all remote files not present in the local directory
+        $(echoGreen "-l"): Use the 'lastpass' script in order to automatically
+            find the QNAP admin password.
+EOF
+}
+
+function loadOptions() {
+    getOpt "-f" force
+    getOpt "-d" delete
+    getOpt "-l" loadFromLastpass
+    getOpt "-u" qnapUser 1 "admin"
+    getOpt "-i" invalidate
+
+    # Init parameters
+    lastpassQnapQuery="qnap login $qnapUser"
+    sid=""
+    share_password=""
+    share_address=""
+    share_directory=""
+
+    return 0
+}
+
+function _requireSid() {
+    if [ -z "$sid" ]; then
+        getTmpFile tmpSid "qnap.${qnapUser}.sid"
+
+        if [ -f "$tmpSid" ] && ! $invalidate; then
+            read sid < "$tmpSid"
+        else
+            _requireSharePassword
+            local sidTool="__ROOT__/modules/qnap_get_sid.js"
+            sid=$(node "$sidTool" "$ADDRESS" "$qnapUser" "$share_password") || error "Auth failed"
+            echo "$sid" > "$tmpSid"
+        fi
+    fi
+}
+
+function _requireShare() {
+    if [ -z "$share_address" ]; then
+        local ip="$ADDRESS"
+        if ! _isIp $ADDRESS; then
+            ip=$(dig +short $ADDRESS)
+        fi
+        verbose "Init from $ip"
+        share_address="//$ip/$1"
+        share_directory="${MOUNT_DIR}/QNAP_$1"
+    fi
+}
+
+function _isIp() {
+    [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+function _requireSharePassword() {
+    if [ -z "$share_password" ]; then
+        if $loadFromLastpass; then
+            share_password=`lastpass --stdout "$lastpassQnapQuery"` || error "Failed to load password"
+            # share_password="$(xclip -sel clip -o)"
+        else
+            inputPassword share_password "Input share password: "
+        fi
+    fi
+}
+
+function _doMount() {
+    echo $share_address
+    _requireSharePassword
+    mountCifs "$share_address" "$share_directory" "$qnapUser" "$share_password" || error "Failed to mount"
+}
+
+function _syncAction() {
+    local syncFn="$1"
+
+    if [ $# -gt 1 ]; then
+        local target
+        if [ -e "$2" ]; then
+            target="$(realpath "$2")"
+        else
+            target="$PWD/$2"
+        fi
+        _iterateSyncEntries "$target" syncFn
+    else
+        _iterateSyncEntries "$PWD" syncFn
+    fi
+}
+
+# Params:
+#    1. Directory
+#   2. (dir,share) -> int : Function to apply to each entry
+#                   (if returns != 0, iteration stops)
+function _iterateSyncEntries() {
+    local reservedChar="\$"
+    local found=false
+    local lines
+    readarray lines < "$SYNC_CONFIG_FILE"
+
+    for line in "${lines[@]}"; do
+        local dir=$(echo "$line" | cut -d "$reservedChar" -f 1)
+        local share=$(echo "$line" | cut -d "$reservedChar" -f 2)
+        if [[ "$1" == "$dir"* ]]; then
+            local rel="${1:${#dir}}"
+
+            initShare "$share"
+            if ! isMounted "$share_directory"; then
+                doMount
+            fi
+
+            $2 "$1" "$share_directory$rel"
+            found=true
+        fi
+    done
+
+    if ! $found; then
+        error "$1 is not listed as a sync directory, use 'qnap config' to add it"
+    fi
+}
+
+# 1. Local
+# 2. Share dir
+function _sync_pull() {
+    if $delete; then
+        rsync -vaz --delete --progress "$2" "$(dirname "$1")"
+    else
+        rsync -vaz --progress "$2" "$(dirname "$1")"
+    fi
+}
+
+# 1. Local
+# 2. Share dir
+function _sync_push() {
+    if $delete; then
+        # TODO Use --dry-run first
+        # TODO Explore -u option
+        # TODO Maybe use unison?
+        rsync -vaz --delete --progress "$1" "$(dirname "$2")"
+    else
+        # echo "$1 <> $2"
+        rsync -vaz --progress "$1" "$(dirname "$2")"
+    fi
+}
+
+function _sync_diff() {
+    tmp=$(diff -qr "$1" "$2")
+    tmp=$(echo "${tmp//$1/LOCAL}")
+    tmp=$(echo "${tmp//$2/QNAP}")
+    echo "$tmp"
+    #echo $output
+}
+
+function _contains() {
+    local target="$1"
+    shift
+
+    for value in "$@"; do
+        if [ "$value" == "$target" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+mount() {
+    hasMoreArgs $#
+    for share in "$@"; do
+        _requireShare "$share"
+        _doMount
+
+        dolphin "$share_directory" &> /dev/null &
+    done
+}
+
+umount() {
+    if [ $# -gt 0 ]; then
+        _requireShare "$1"
+        unmount "$share_directory" "$force"
+    else
+        for file in "${MOUNT_DIR}/QNAP_"*; do
+            if [ -d "$file" ] && isMounted "$file"; then
+                unmount "$file" "$force"
+
+            elif [ -d "$file" ]; then
+                verbose "Cleaning $file"
+                sudo rmdir "$file"
+            fi
+        done
+    fi
+}
+
+wake() {
+    wakeonlan "${QNAP_MAC}"
+}
+
+web() {
+    google-chrome "$ADDRESS"
+}
+
+download() {
+    _requireSid
+
+    local remotePath="$1"
+    local fileName="$(basename "$1")"
+    local outputFile="${2:-.}/$fileName"
+
+    # Query Params
+    local isfolder="0"
+    local compress="0"
+    local source_path="$(dirname "$remotePath")"
+    local source_file="$fileName"
+    local source_total="1"
+
+    local url="http://${ADDRESS}:8080/cgi-bin/filemanager/utilRequest.cgi?func=download&sid=${sid}&isfolder=${isfolder}&compress=${compress}&source_path=${source_path}&source_file=${source_file}&source_total=${source_total}"
+
+    verbose "GET $url"
+    wget -c "$url" -O "$outputFile" --show-progress
+}
+
+status() {
+    local text=""
+    for file in "${MOUNT_DIR}/QNAP_"*; do
+        if [ -e "$file" ]; then
+            if isMounted "$file"; then
+                text="${text}- ${file}\n"
+            fi
+        fi
+    done
+
+    test -z "$text" && text="No drive mounted"
+
+    echo -e "Mounted QNAP drives:\n\n$text"
+}
+
+config() {
+    xdg-open "$SYNC_CONFIG_FILE" &
+}
+
+push() {
+    _syncAction _sync_push "$@"
+}
+
+pull() {
+    _syncAction _sync_pull "$@"
+}
+
+diff() {
+    _syncAction _sync_diff "$@"
+}
+
+function run () {
+    hasMoreArgs $#
+
+    local cmds=(mount umount wake web download status config pull push diff)
+    local cmd="$1"
+    if ! _contains "$cmd" "${cmds[@]}"; then
+        error "Unknown command $cmd"
+    fi
+
+    shift
+    $cmd "$@"
+}
+
+
+source "__ROOT__/mountTools"
+source "__STARTER__@v1"
