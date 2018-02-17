@@ -1,4 +1,5 @@
 {
+    "main": "qnap",
     "files": [
         {
             "name": "scripts-qnap",
