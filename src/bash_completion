@@ -1,0 +1,33 @@
+__qnap()
+{
+    local modes shares
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    modes="mount umount wake web download status config pull push diff"
+    shares="Documents Download home Multimedia Music Pictures Public Recordings Usb Web Services"
+
+    case "$prev" in
+        "qnap" )
+            COMPREPLY=( $(compgen -W "${modes}" -- ${cur}) )
+            ;;
+        "mount" )
+            COMPREPLY=( $(compgen -W "${shares}" -- ${cur}) )
+            ;;
+        "umount" )
+            COMPREPLY=( $(compgen -W "${shares}" -- ${cur}) )
+            ;;
+        "wake" )
+            ;;
+        "web" )
+            ;;
+        "download" )
+            COMPREPLY=( $(compgen -W "${shares}" -- ${cur}) )
+            ;;
+        # * )
+        #     ;;
+    esac
+}
+
+complete -F __qnap qnap
