@@ -9,8 +9,8 @@ function isMounted() {
 #	2: Mount directory
 #	3: User name
 #	4: Password
-#	5: Input password (def: false)
-#	6: Input user (def: false)
+#	5: UID
+#	6: GID
 #
 function mountCifs() {
 	if $(isMounted "$1"); then
@@ -35,19 +35,8 @@ function mountCifs() {
 	if [ -z "$4" ]; then
 		inputPassword __pass "Input mount password: "
 	fi
-	# if ${5:-false}; then
-	# 	inputPassword __pass "Input mount password: "
-	# else
-	# 	__pass="$4"
-	# fi
 
-	# if ${6:-false}; then
-	# 	input __user "Input mount user name: "
-	# else
-	# 	__user="$3"
-	# fi
-
-	sudo mount -t cifs -o uid=1000,gid=1000,username="$__user",password="$__pass" "$1" "$2"
+	sudo mount -t cifs -o uid=$5,gid=$6,username="$__user",password="$__pass" "$1" "$2"
 
 	if [ $? -ne 0 ]; then
 		sudo rmdir "$2"
@@ -70,7 +59,7 @@ function unmount() {
 	else
 		sudo umount "$1" || error "Can't unmount $1"
 	fi
-	
+
 	verbose "Removing directory..."
 	sudo rmdir "$1"
 }

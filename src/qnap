@@ -86,6 +86,8 @@ function loadOptions() {
     getOpt "-l" loadFromLastpass
     getOpt "-u" qnapUser 1 "admin"
     getOpt "-i" invalidate
+    getOpt "--uid" uid 1 1000
+    getOpt "--gid" gid 1 1000
 
     # Init parameters
     lastpassQnapQuery="qnap login $qnapUser"
@@ -142,7 +144,7 @@ function _requireSharePassword() {
 function _doMount() {
     echo $share_address
     _requireSharePassword
-    mountCifs "$share_address" "$share_directory" "$qnapUser" "$share_password" || error "Failed to mount"
+    mountCifs "$share_address" "$share_directory" "$qnapUser" "$share_password" "$uid" "$gid" || error "Failed to mount"
 }
 
 function _syncAction() {
