@@ -1,10 +1,7 @@
 {
     "main": "qnap",
-    "files": [
-        {
-            "name": "scripts-qnap",
-            "output": "config.properties"
-        }
+    "config": [
+        "config.properties"
     ],
     "postInstall": "cd dist/modules && npm install"
 }
