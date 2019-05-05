@@ -33,6 +33,9 @@ function printHelp() {
         Send a magic packet to NAS for the Wake-On-Lan function.
         Works only if on the same subnet as the QNAP NAS.
 
+    ${PROGNAME} `echoBlue turnOff`
+        Turn off the QNAP NAS.
+
     ${PROGNAME} `echoBlue web`
         Open the QNAP web interface.
 
@@ -316,6 +319,15 @@ status() {
     echo -e "Mounted QNAP drives:\n\n$text"
 }
 
+turnOff() {
+    _requireSharePassword
+
+    # count=`date +"%s"`
+    # curl -u admin:$share_password "http://${ADDRESS}:8080/cgi-bin/misc/misc.cgi?count=$count&func=restart_main_ok&SHUTDOWN= "
+    script="halt"
+    echo "$script" | sshpass -p "$share_password" ssh admin@$ADDRESS
+}
+
 config() {
     xdg-open "$SYNC_CONFIG_FILE" &
 }
@@ -335,7 +347,7 @@ diff() {
 function run () {
     hasMoreArgs $#
 
-    local cmds=(mount umount wake web download status config pull push diff ping)
+    local cmds=(mount umount wake web download status config pull push diff ping turnOff)
     local cmd="$1"
     if ! _contains "$cmd" "${cmds[@]}"; then
         error "Unknown command $cmd"

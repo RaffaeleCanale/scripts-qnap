@@ -5,7 +5,7 @@ __qnap()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    modes="mount umount wake web download status config pull push diff"
+    modes="mount umount wake web download status config pull push diff ping turnOff"
     shares="Documents Download home Multimedia Music Pictures Public Recordings Usb Web Services"
 
     case "$prev" in
