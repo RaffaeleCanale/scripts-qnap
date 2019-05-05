@@ -42,6 +42,9 @@ function printHelp() {
     ${PROGNAME} `echoBlue status`
         List all the mounted domains.
 
+    ${PROGNAME} `echoBlue ping`
+        Ping the QNAP device.
+
     ${PROGNAME} `echoBlue config`
         Edit the synchronisation configuration file.
         The configuration file defines an equivalence between a local directory
@@ -274,6 +277,10 @@ web() {
     google-chrome "$ADDRESS"
 }
 
+ping() {
+    /bin/ping -c1 "$ADDRESS"
+}
+
 download() {
     _requireSid
 
@@ -328,7 +335,7 @@ diff() {
 function run () {
     hasMoreArgs $#
 
-    local cmds=(mount umount wake web download status config pull push diff)
+    local cmds=(mount umount wake web download status config pull push diff ping)
     local cmd="$1"
     if ! _contains "$cmd" "${cmds[@]}"; then
         error "Unknown command $cmd"
