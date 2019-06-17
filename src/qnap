@@ -17,12 +17,14 @@ function printHelp() {
 
     Utility methods for the QNAP NAS system.
 
-    ${PROGNAME} `echoBlue mount` `echoViolet domains` `echoGreen "-l"`
+
+    ${PROGNAME} `echoBlue mount` `echoViolet domains` `echoGreen "-l -p <password>"`
         Mount the given domain at ${MOUNT_DIR}/QNAP_domain.
         The domain password will be prompt unless the -l option is used.
 
         $(echoGreen "-l"): Use the 'lastpass' script in order to automatically
             find the QNAP admin password.
+        $(echoGreen "-p"): Specify the password
 
     ${PROGNAME} `echoBlue umount` `echoViolet "</domain>"` `echoGreen "-f"`
         Unmount the given domain (or all the mounted domains if none specified)
@@ -33,8 +35,10 @@ function printHelp() {
         Send a magic packet to NAS for the Wake-On-Lan function.
         Works only if on the same subnet as the QNAP NAS.
 
-    ${PROGNAME} `echoBlue turnOff`
+    ${PROGNAME} `echoBlue turnOff` `echoGreen "-p <password>"`
         Turn off the QNAP NAS.
+
+        $(echoGreen "-p"): Specify the password
 
     ${PROGNAME} `echoBlue web`
         Open the QNAP web interface.
@@ -94,11 +98,12 @@ function loadOptions() {
     getOpt "-i" invalidate
     getOpt "--uid" uid 1 1000
     getOpt "--gid" gid 1 1000
+    getOpt "-p" password 1 ""
 
     # Init parameters
     lastpassQnapQuery="qnap login $qnapUser"
     sid=""
-    share_password=""
+    share_password="${password:-}"
     share_address=""
     share_directory=""
 
