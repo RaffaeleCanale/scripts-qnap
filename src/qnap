@@ -330,7 +330,7 @@ turnOff() {
     # count=`date +"%s"`
     # curl -u admin:$share_password "http://${ADDRESS}:8080/cgi-bin/misc/misc.cgi?count=$count&func=restart_main_ok&SHUTDOWN= "
     script="halt"
-    echo "$script" | sshpass -p "$share_password" ssh admin@$ADDRESS
+    echo "$script" | sshpass -p "$share_password" ssh -tt admin@$ADDRESS
 }
 
 config() {
