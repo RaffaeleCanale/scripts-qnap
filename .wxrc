@@ -1,5 +1,6 @@
 {
     "main": "qnap",
+    "project": "scripts/qnap",
     "config": [
         "config.properties"
     ],
