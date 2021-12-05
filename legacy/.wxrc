@@ -1,0 +1,8 @@
+{
+    "main": "qnap",
+    "project": "scripts/qnap",
+    "config": [
+        "config.properties"
+    ],
+    "postInstall": "cd dist/modules && npm install"
+}
