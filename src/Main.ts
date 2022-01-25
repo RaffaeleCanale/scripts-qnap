@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import ping from 'ping';
 import prompts from 'prompts';
 import { readConfig } from '~/config/QnapConfig';
 import {
@@ -16,6 +17,7 @@ function addCommand(
             await action(...args);
         } catch (error) {
             console.error((error as Error).message);
+            process.exit(1);
         }
     });
 }
@@ -66,5 +68,14 @@ addCommand(
         }
     },
 );
+
+addCommand(program.command('ping').description('Pings the NAS.'), async () => {
+    const config = await readConfig();
+    console.log(`Pinging NAS (${config.hostname})...`);
+    const response = await ping.promise.probe(config.hostname);
+    if (!response.alive) {
+        throw new Error('NAS is not reachable.');
+    }
+});
 
 program.parse(process.argv);
