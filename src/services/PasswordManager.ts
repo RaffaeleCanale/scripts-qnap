@@ -1,0 +1,39 @@
+import prompts from 'prompts';
+import { Keyring } from '~/utils/Keyring';
+
+const PASSWORD_KEY = 'qnapPassword';
+
+function loadPasswordFromKeyring(): Promise<string | null> {
+    return Keyring.lookupKey('qnapPassword');
+}
+
+function storePassword(password: string): Promise<void> {
+    return Keyring.storeKey(PASSWORD_KEY, password);
+}
+
+async function promptPassword(): Promise<string> {
+    const { password } = (await prompts({
+        type: 'password',
+        name: 'password',
+        message: 'Please enter the QNAP password:',
+    })) as { password?: string };
+
+    if (!password) {
+        throw new Error('No password provided.');
+    }
+
+    return password;
+}
+
+export const PasswordManager = {
+    async getQnapPassword(): Promise<string> {
+        let password = await loadPasswordFromKeyring();
+
+        if (!password) {
+            password = await promptPassword();
+            await storePassword(password);
+        }
+
+        return password;
+    },
+};

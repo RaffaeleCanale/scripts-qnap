@@ -1,12 +1,12 @@
 import { Command } from 'commander';
 import ping from 'ping';
-import prompts from 'prompts';
-import { readConfig } from '~/config/QnapConfig';
+import { readConfig } from '~/config/QnapConfigReader';
+import { PasswordManager } from '~/services/PasswordManager';
 import {
-    getMountedDomains,
-    mountDomain,
-    unmountDomain,
-} from '~/domains/QnapResource';
+    getMountedShares,
+    mountShare,
+    unmountShare,
+} from '~/services/QnapShares';
 
 function addCommand(
     program: Command,
@@ -27,44 +27,50 @@ const program = new Command();
 program.name('qnap').version('0.0.1');
 
 addCommand(
-    program.command('status').description('List all the mounted domains.'),
+    program.command('status').description('List all the mounted shares.'),
     async () => {
         const config = await readConfig();
-        const mountedDomains = await getMountedDomains(config);
+        const mountedShares = await getMountedShares(config);
 
         console.log(
-            'Mounted domains:\n\n' +
-                mountedDomains.map((domain) => `  - ${domain}`).join('\n'),
+            'Mounted shares:\n\n' +
+                mountedShares.map((share) => `  - ${share}`).join('\n'),
         );
     },
 );
 
 addCommand(
-    program
-        .command('mount <domains...>')
-        .description('mount the given domains.'),
-    async (domains) => {
+    program.command('mount <shares...>').description('mount the given shares.'),
+    async (shares) => {
         const config = await readConfig();
-        const { password } = await prompts({
-            type: 'password',
-            name: 'password',
-            message: 'Please enter the QNAP password:',
-        });
+        const password = await PasswordManager.getQnapPassword();
 
-        for (const domain of domains) {
-            await mountDomain(config, domain, password);
+        for (const share of shares) {
+            await mountShare(config, share, password);
         }
     },
 );
 
 addCommand(
     program
-        .command('unmount <domains...>')
-        .description('Unmount the given domains.'),
-    async (domains) => {
+        .command('unmount <shares...>')
+        .description('Unmount the given shares.'),
+    async (shares) => {
         const config = await readConfig();
-        for (const domain of domains) {
-            await unmountDomain(config, domain);
+        for (const share of shares) {
+            await unmountShare(config, share);
+        }
+    },
+);
+
+addCommand(
+    program.command('unmount-all').description('Unmount the given shares.'),
+    async () => {
+        const config = await readConfig();
+        const mountedShares = await getMountedShares(config);
+
+        for (const share of mountedShares) {
+            await unmountShare(config, share);
         }
     },
 );

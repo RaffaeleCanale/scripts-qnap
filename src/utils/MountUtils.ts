@@ -1,10 +1,19 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import { executeCommand, executeInteractiveCommand } from '~/utils/CmdUtils';
 
 export interface MountOptions {
     address: string;
     user: string;
     password: string;
+}
+
+async function fileExists(file: string): Promise<boolean> {
+    try {
+        await fs.access(file);
+        return Promise.resolve(true);
+    } catch (error) {
+        return false;
+    }
 }
 
 export async function isMounted(directory: string): Promise<boolean> {
@@ -23,8 +32,8 @@ export async function mount(
         return;
     }
 
-    const directoryExists = fs.existsSync(directory);
-    if (directoryExists && fs.readdirSync(directory).length > 0) {
+    const directoryExists = await fileExists(directory);
+    if (directoryExists && (await fs.readdir(directory)).length > 0) {
         console.log(`${directory} already exists`);
         return;
     }
@@ -58,6 +67,9 @@ export async function mount(
 export async function unmount(directory: string): Promise<void> {
     if (!(await isMounted(directory))) {
         console.log(`${directory} is not mounted`);
+        if (await fileExists(directory)) {
+            await executeCommand(`sudo rmdir ${directory}`);
+        }
         return;
     }
 

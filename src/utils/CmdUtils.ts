@@ -35,7 +35,7 @@ export function executeInteractiveCommand(
 
         shell.on('exit', (code) => {
             if (code !== 0) {
-                reject(new Error(`Command failed with code ${code}`));
+                reject(new Error(`Command failed with code ${code ?? '-'}`));
             } else {
                 resolve();
             }
