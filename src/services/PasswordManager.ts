@@ -1,4 +1,5 @@
 import prompts from 'prompts';
+import { QnapConfig } from '~/config/QnapConfig';
 import { Keyring } from '~/utils/Keyring';
 
 const PASSWORD_KEY = 'qnapPassword';
@@ -26,8 +27,8 @@ async function promptPassword(): Promise<string> {
 }
 
 export const PasswordManager = {
-    async getQnapPassword(): Promise<string> {
-        let password = await loadPasswordFromKeyring();
+    async getQnapPassword(config: QnapConfig): Promise<string> {
+        let password = config.qnapPassword ?? (await loadPasswordFromKeyring());
 
         if (!password) {
             password = await promptPassword();

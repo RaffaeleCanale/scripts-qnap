@@ -43,7 +43,7 @@ addCommand(
     program.command('mount <shares...>').description('mount the given shares.'),
     async (shares) => {
         const config = await readConfig();
-        const password = await PasswordManager.getQnapPassword();
+        const password = await PasswordManager.getQnapPassword(config);
 
         for (const share of shares) {
             await mountShare(config, share, password);
