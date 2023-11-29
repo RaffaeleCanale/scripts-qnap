@@ -22,7 +22,7 @@ export async function getMountedShares(config: QnapConfig): Promise<string[]> {
 export function unmountShare(config: QnapConfig, share: string): Promise<void> {
     const directory = path.join(config.mountDirectory, `QNAP_${share}`);
 
-    return unmount(directory);
+    return unmount(directory, config.sudo);
 }
 
 export function mountShare(
@@ -35,6 +35,7 @@ export function mountShare(
         address: `//${config.hostname}/${share}`,
         user: config.qnapUser,
         password,
+        sudo: config.sudo,
     };
 
     return mount(directory, options);

@@ -5,6 +5,11 @@ export interface MountOptions {
     address: string;
     user: string;
     password: string;
+    sudo: boolean;
+}
+
+function addSudo(cond: boolean): string[] {
+    return cond ? ['sudo'] : [];
 }
 
 async function fileExists(file: string): Promise<boolean> {
@@ -39,7 +44,11 @@ export async function mount(
     }
 
     if (!directoryExists) {
-        await executeInteractiveCommand(['sudo', 'mkdir', directory]);
+        await executeInteractiveCommand([
+            ...addSudo(options.sudo),
+            'mkdir',
+            directory,
+        ]);
     }
 
     try {
@@ -49,7 +58,7 @@ export async function mount(
             }:${options.password.substring(0, 3)}****`,
         );
         await executeInteractiveCommand([
-            'sudo',
+            ...addSudo(options.sudo),
             'mount',
             '-t',
             'cifs',
@@ -59,21 +68,27 @@ export async function mount(
             directory,
         ]);
     } catch (error) {
-        await executeInteractiveCommand(['sudo', 'rmdir', directory]);
+        await executeInteractiveCommand([
+            ...addSudo(options.sudo),
+            'rmdir',
+            directory,
+        ]);
         throw error;
     }
 }
 
-export async function unmount(directory: string): Promise<void> {
+export async function unmount(directory: string, sudo: boolean): Promise<void> {
+    const sudoPrefix = sudo ? 'sudo ' : '';
+
     if (!(await isMounted(directory))) {
         console.log(`${directory} is not mounted`);
         if (await fileExists(directory)) {
-            await executeCommand(`sudo rmdir ${directory}`);
+            await executeCommand(`${sudoPrefix}rmdir ${directory}`);
         }
         return;
     }
 
     console.log(`Unmounting ${directory}`);
-    await executeInteractiveCommand(['sudo', 'umount', directory]);
-    await executeCommand(`sudo rmdir ${directory}`);
+    await executeInteractiveCommand([...addSudo(sudo), 'umount', directory]);
+    await executeCommand(`${sudoPrefix}rmdir ${directory}`);
 }

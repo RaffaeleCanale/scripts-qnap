@@ -5,6 +5,7 @@ export const QnapConfigSchema = z.object({
     hostname: z.string(),
     qnapUser: z.string().default('admin'),
     qnapPassword: z.string().optional(),
+    sudo: z.boolean().default(true),
 });
 
 export type QnapConfig = z.infer<typeof QnapConfigSchema>;
