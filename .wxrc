@@ -1,8 +1,12 @@
 {
     "project": "scripts-qnap",
-    "type": "script",
-    "executableName": "qnap",
     "config": [
         "config.json"
-    ]
+    ],
+    "build": "node",
+    "install": {
+        "type": "script",
+        "executableName": "qnap"
+    },
+    "runCommand": "node"
 }
