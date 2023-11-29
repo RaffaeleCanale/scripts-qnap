@@ -11,7 +11,7 @@ export async function getMountedShares(config: QnapConfig): Promise<string[]> {
     for (const child of children) {
         if (child.startsWith('QNAP_')) {
             if (await isMounted(path.join(config.mountDirectory, child))) {
-                result.push(child);
+                result.push(child.substring(5));
             }
         }
     }
