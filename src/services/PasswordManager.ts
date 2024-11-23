@@ -12,6 +12,10 @@ function storePassword(password: string): Promise<void> {
     return Keyring.storeKey(PASSWORD_KEY, password);
 }
 
+function clearPassword(): Promise<void> {
+    return Keyring.clearKey(PASSWORD_KEY);
+}
+
 async function promptPassword(): Promise<string> {
     const { password } = (await prompts({
         type: 'password',
@@ -37,4 +41,8 @@ export const PasswordManager = {
 
         return password;
     },
+
+    clearQnapPassword(): Promise<void> {
+        return clearPassword()
+    }
 };

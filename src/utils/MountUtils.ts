@@ -57,13 +57,19 @@ export async function mount(
                 options.user
             }:${options.password.substring(0, 3)}****`,
         );
+        const uid = (await executeCommand('id -u'))
+            .replaceAll('\n', '')
+            .trim();
+        const gid = (await executeCommand('id -g'))
+            .replaceAll('\n', '')
+            .trim();
         await executeInteractiveCommand([
             ...addSudo(options.sudo),
             'mount',
             '-t',
             'cifs',
             '-o',
-            `uid=1000,gid=1000,username=${options.user},password=${options.password}`,
+            `uid=${uid},gid=${gid},username=${options.user},password=${options.password}`,
             options.address,
             directory,
         ]);

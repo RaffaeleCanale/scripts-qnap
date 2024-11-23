@@ -40,6 +40,13 @@ addCommand(
 );
 
 addCommand(
+    program.command('clear-password').description('Clear stored password.'),
+    async () => {
+        await PasswordManager.clearQnapPassword();
+    },
+);
+
+addCommand(
     program.command('mount <shares...>').description('mount the given shares.'),
     async (shares) => {
         const config = await readConfig();
