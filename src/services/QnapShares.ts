@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import { QnapConfig } from '~/config/QnapConfig';
+import { QnapConfig, type MountDirectory } from '~/config/QnapConfig';
 import { isMounted, mount, MountOptions, unmount } from '~/utils/MountUtils';
+
+export type ShareDirectory = `${MountDirectory}/QNAP_${string}`;
 
 export async function getMountedShares(config: QnapConfig): Promise<string[]> {
     const children = await util.promisify(fs.readdir)(config.mountDirectory);
@@ -20,9 +22,9 @@ export async function getMountedShares(config: QnapConfig): Promise<string[]> {
 }
 
 export function unmountShare(config: QnapConfig, share: string): Promise<void> {
-    const directory = path.join(config.mountDirectory, `QNAP_${share}`);
+    const directory = `${config.mountDirectory}/QNAP_${share}` as const;
 
-    return unmount(directory, config.sudo);
+    return unmount(directory);
 }
 
 export function mountShare(
@@ -30,12 +32,11 @@ export function mountShare(
     share: string,
     password: string,
 ): Promise<void> {
-    const directory = path.join(config.mountDirectory, `QNAP_${share}`);
+    const directory = `${config.mountDirectory}/QNAP_${share}` as const;
     const options: MountOptions = {
         address: `//${config.hostname}/${share}`,
         user: config.qnapUser,
         password,
-        sudo: config.sudo,
     };
 
     return mount(directory, options);

@@ -1,33 +1,29 @@
 import fs from 'fs/promises';
-import { executeCommand, executeInteractiveCommand } from '~/utils/CmdUtils';
+import type { ShareDirectory } from '~/services/QnapShares';
+import { Shell } from '~/utils/CmdUtils';
 
 export interface MountOptions {
     address: string;
     user: string;
     password: string;
-    sudo: boolean;
-}
-
-function addSudo(cond: boolean): string[] {
-    return cond ? ['sudo'] : [];
 }
 
 async function fileExists(file: string): Promise<boolean> {
     try {
         await fs.access(file);
-        return Promise.resolve(true);
-    } catch (error) {
+        return true;
+    } catch {
         return false;
     }
 }
 
 export async function isMounted(directory: string): Promise<boolean> {
-    const result = await executeCommand('cat /proc/mounts');
+    const result = await Shell.catProcMounts();
     return result.includes(directory);
 }
 
 export async function mount(
-    directory: string,
+    directory: ShareDirectory,
     options: MountOptions,
 ): Promise<void> {
     // sudo mount -t cifs -o uid=$5,gid=$6,username="$__user",password="$__pass" "$1" "$2"
@@ -44,11 +40,7 @@ export async function mount(
     }
 
     if (!directoryExists) {
-        await executeInteractiveCommand([
-            ...addSudo(options.sudo),
-            'mkdir',
-            directory,
-        ]);
+        await Shell.shareDirectory.mkdir(directory);
     }
 
     try {
@@ -57,44 +49,24 @@ export async function mount(
                 options.user
             }:${options.password.substring(0, 3)}****`,
         );
-        const uid = (await executeCommand('id -u'))
-            .replaceAll('\n', '')
-            .trim();
-        const gid = (await executeCommand('id -g'))
-            .replaceAll('\n', '')
-            .trim();
-        await executeInteractiveCommand([
-            ...addSudo(options.sudo),
-            'mount',
-            '-t',
-            'cifs',
-            '-o',
-            `uid=${uid},gid=${gid},username=${options.user},password=${options.password}`,
-            options.address,
-            directory,
-        ]);
+        const user = await Shell.getUidGid();
+        await Shell.mount(directory, user, options);
     } catch (error) {
-        await executeInteractiveCommand([
-            ...addSudo(options.sudo),
-            'rmdir',
-            directory,
-        ]);
+        await Shell.shareDirectory.rmdir(directory);
         throw error;
     }
 }
 
-export async function unmount(directory: string, sudo: boolean): Promise<void> {
-    const sudoPrefix = sudo ? 'sudo ' : '';
-
+export async function unmount(directory: ShareDirectory): Promise<void> {
     if (!(await isMounted(directory))) {
         console.log(`${directory} is not mounted`);
         if (await fileExists(directory)) {
-            await executeCommand(`${sudoPrefix}rmdir ${directory}`);
+            await Shell.shareDirectory.rmdir(directory);
         }
         return;
     }
 
     console.log(`Unmounting ${directory}`);
-    await executeInteractiveCommand([...addSudo(sudo), 'umount', directory]);
-    await executeCommand(`${sudoPrefix}rmdir ${directory}`);
+    await Shell.umount(directory);
+    await Shell.shareDirectory.rmdir(directory);
 }

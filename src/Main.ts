@@ -1,12 +1,13 @@
 import { Command } from 'commander';
 import ping from 'ping';
-import { readConfig } from '~/config/QnapConfigReader';
+import { useConfig } from '~/config/QnapConfigReader';
 import { PasswordManager } from '~/services/PasswordManager';
 import {
     getMountedShares,
     mountShare,
     unmountShare,
 } from '~/services/QnapShares';
+import { exportSudoers } from '~/utils/CmdUtils';
 
 function addCommand(
     program: Command,
@@ -29,7 +30,7 @@ program.name('qnap').version('0.0.1');
 addCommand(
     program.command('status').description('List all the mounted shares.'),
     async () => {
-        const config = await readConfig();
+        const config = await useConfig();
         const mountedShares = await getMountedShares(config);
 
         console.log(
@@ -47,9 +48,17 @@ addCommand(
 );
 
 addCommand(
+    program.command('generate-sudoers').description('Generate sudoers file.'),
+    async () => {
+        const sudoers = await exportSudoers();
+        console.log(sudoers);
+    },
+);
+
+addCommand(
     program.command('mount <shares...>').description('mount the given shares.'),
     async (shares) => {
-        const config = await readConfig();
+        const config = await useConfig();
         const password = await PasswordManager.getQnapPassword(config);
 
         for (const share of shares) {
@@ -63,7 +72,7 @@ addCommand(
         .command('unmount <shares...>')
         .description('Unmount the given shares.'),
     async (shares) => {
-        const config = await readConfig();
+        const config = await useConfig();
         for (const share of shares) {
             await unmountShare(config, share);
         }
@@ -73,7 +82,7 @@ addCommand(
 addCommand(
     program.command('unmount-all').description('Unmount the given shares.'),
     async () => {
-        const config = await readConfig();
+        const config = await useConfig();
         const mountedShares = await getMountedShares(config);
 
         for (const share of mountedShares) {
@@ -83,7 +92,7 @@ addCommand(
 );
 
 addCommand(program.command('ping').description('Pings the NAS.'), async () => {
-    const config = await readConfig();
+    const config = await useConfig();
     console.log(`Pinging NAS (${config.hostname})...`);
     const response = await ping.promise.probe(config.hostname);
     if (!response.alive) {
