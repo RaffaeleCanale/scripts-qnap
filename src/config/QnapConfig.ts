@@ -23,7 +23,7 @@ export const QnapConfigSchema = z.strictObject({
             uid: z.string().optional(),
             gid: z.string().optional(),
         })
-        .default({}),
+        .prefault({}),
 });
 
 export type QnapConfig = z.infer<typeof QnapConfigSchema>;

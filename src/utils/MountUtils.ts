@@ -1,11 +1,12 @@
+import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
 import fs from 'fs/promises';
-import type { ShareDirectory } from '~/services/QnapShares';
-import { Shell } from '~/utils/CmdUtils';
+import type { ShareDirectory } from '../services/QnapShares.ts';
+import { Shell } from './CmdUtils.ts';
 
 export interface MountOptions {
     address: string;
     user: string;
-    password: string;
+    password: Secret;
 }
 
 async function fileExists(file: string): Promise<boolean> {
@@ -47,7 +48,7 @@ export async function mount(
         console.log(
             `Mounting ${options.address} at ${directory} with ${
                 options.user
-            }:${options.password.substring(0, 3)}****`,
+            }:${options.password.dangerouslyReveal().substring(0, 3)}****`,
         );
         const user = await Shell.getUidGid();
         await Shell.mount(directory, user, options);

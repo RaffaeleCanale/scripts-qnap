@@ -1,21 +1,14 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { QnapConfig, QnapConfigSchema } from '~/config/QnapConfig';
+import { type QnapConfig, QnapConfigSchema } from './QnapConfig.ts';
+import { useProperties } from './WxSecrets.ts';
 
-const CONFIG_FILE_PATH = path.join(__dirname, '../../config.json');
+let config: QnapConfig | undefined = undefined;
 
-let config: Promise<QnapConfig> | null = null;
-
-export async function useConfig(): Promise<QnapConfig> {
-    if (config === null) {
-        config = readConfig();
+export function useConfig(): QnapConfig {
+    if (config !== undefined) {
+        return config;
     }
 
+    const properties = useProperties().getProperties();
+    config = QnapConfigSchema.parse(properties);
     return config;
-}
-
-async function readConfig(): Promise<QnapConfig> {
-    const file = await fs.readFile(CONFIG_FILE_PATH);
-
-    return QnapConfigSchema.parse(JSON.parse(file.toString()));
 }

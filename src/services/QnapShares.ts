@@ -1,8 +1,14 @@
+import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import { QnapConfig, type MountDirectory } from '~/config/QnapConfig';
-import { isMounted, mount, MountOptions, unmount } from '~/utils/MountUtils';
+import type { MountDirectory, QnapConfig } from '../config/QnapConfig.ts';
+import {
+    isMounted,
+    mount,
+    unmount,
+    type MountOptions,
+} from '../utils/MountUtils.ts';
 
 export type ShareDirectory = `${MountDirectory}/QNAP_${string}`;
 
@@ -30,7 +36,7 @@ export function unmountShare(config: QnapConfig, share: string): Promise<void> {
 export function mountShare(
     config: QnapConfig,
     share: string,
-    password: string,
+    password: Secret,
 ): Promise<void> {
     const directory = `${config.mountDirectory}/QNAP_${share}` as const;
     const options: MountOptions = {

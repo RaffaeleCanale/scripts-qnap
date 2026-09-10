@@ -1,24 +1,25 @@
 {
     "compilerOptions": {
-        "target": "ES2021",
-        "module": "CommonJS",
-        "moduleResolution": "Node",
-        "outDir": "dist",
-        // Process & infer types from .js files.
-        "allowJs": false,
-        // Don't emit; allow Babel to transform files.
-        "noEmit": false,
-        // Enable strictest settings like strictNullChecks & noImplicitAny.
-        "strict": true,
-        // Disallow features that require cross-file information for emit.
-        "isolatedModules": false,
-        // Import non-ES modules as default imports.
-        "esModuleInterop": true,
-        "experimentalDecorators": true,
-        "baseUrl": "./",
-        "paths": {
-            "~/*": ["src/*"]
-        }
-    },
-    "include": ["src/**/*"]
+        // COMMON OPTIONS
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        // - strictness
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "erasableSyntaxOnly": true,
+        "verbatimModuleSyntax": true,
+        // - modules
+        "moduleDetection": "force", // Forces type: module
+        "skipLibCheck": true, // Don't typecheck lib files
+
+        // ENVIRONMENT
+        "lib": ["ESNext"],
+        "types": ["node"],
+        "resolveJsonModule": true,
+
+        // OUTPUT
+        "noEmit": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "allowImportingTsExtensions": true
+    }
 }

@@ -1,48 +1,13 @@
-import prompts from 'prompts';
-import { QnapConfig } from '~/config/QnapConfig';
-import { Keyring } from '~/utils/Keyring';
-
-const PASSWORD_KEY = 'qnapPassword';
-
-function loadPasswordFromKeyring(): Promise<string | null> {
-    return Keyring.lookupKey('qnapPassword');
-}
-
-function storePassword(password: string): Promise<void> {
-    return Keyring.storeKey(PASSWORD_KEY, password);
-}
-
-function clearPassword(): Promise<void> {
-    return Keyring.clearKey(PASSWORD_KEY);
-}
-
-async function promptPassword(): Promise<string> {
-    const { password } = (await prompts({
-        type: 'password',
-        name: 'password',
-        message: 'Please enter the QNAP password:',
-    })) as { password?: string };
-
-    if (!password) {
-        throw new Error('No password provided.');
-    }
-
-    return password;
-}
+import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
+import type { QnapConfig } from '../config/QnapConfig.ts';
+import { useSecrets } from '../config/WxSecrets.ts';
 
 export const PasswordManager = {
-    async getQnapPassword(config: QnapConfig): Promise<string> {
-        let password = config.qnapPassword ?? (await loadPasswordFromKeyring());
+    getQnapPassword(config: QnapConfig): Secret {
+        const secrets = useSecrets();
 
-        if (!password) {
-            password = await promptPassword();
-            await storePassword(password);
-        }
-
-        return password;
+        return config.qnapPassword
+            ? Secret.createFromString(config.qnapPassword)
+            : secrets.getSecret('QNAP_PASSWORD');
     },
-
-    clearQnapPassword(): Promise<void> {
-        return clearPassword()
-    }
 };

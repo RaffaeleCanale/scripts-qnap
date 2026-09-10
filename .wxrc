@@ -1,8 +1,5 @@
 {
     "project": "scripts-qnap",
-    "config": [
-        "config.json"
-    ],
     "build": "node",
     "install": {
         "type": "script",
