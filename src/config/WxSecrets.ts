@@ -4,15 +4,17 @@ import {
     usePropertiesManager,
     useSecretsManager,
 } from '@RaffaeleCanale/wx-secrets-manager';
+import { useConfig } from './QnapConfigReader.ts';
 
 const APP_NAME = 'scripts-qnap';
 
-export async function loadConfig(withSecrets: boolean) {
+export async function loadConfig(withPassword: boolean) {
     await using app = useFirebaseAppWrapper();
     await app.loginFromKeyring();
     await useEncryptionKey().loadKeyFromKeyring();
     await useProperties().loadProperties();
-    if (withSecrets) {
+
+    if (withPassword && useConfig().qnapPassword === undefined) {
         await useSecrets().loadSecrets();
     }
 }
