@@ -11,9 +11,11 @@ const APP_NAME = 'scripts-qnap';
 
 export async function loadConfig(withPassword: boolean) {
     const properties = useProperties();
-    const secrets = withPassword ? useSecrets() : undefined;
+    await loadAllFromKeyring(properties);
 
-    await loadAllFromKeyring(properties, secrets);
+    if (withPassword && properties.getProperty('qnapPassword') === undefined) {
+        await useSecrets().loadSecrets();
+    }
 }
 
 export const useSecrets = define(() =>
