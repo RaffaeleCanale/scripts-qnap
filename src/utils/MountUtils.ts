@@ -1,13 +1,15 @@
-import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
 import fs from 'fs/promises';
+
+import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
+
 import type { ShareDirectory } from '../services/QnapShares.ts';
 import { Shell } from './CmdUtils.ts';
 
-export interface MountOptions {
+export type MountOptions = {
     address: string;
     user: string;
     password: Secret;
-}
+};
 
 async function fileExists(file: string): Promise<boolean> {
     try {
@@ -23,10 +25,7 @@ export async function isMounted(directory: string): Promise<boolean> {
     return result.includes(directory);
 }
 
-export async function mount(
-    directory: ShareDirectory,
-    options: MountOptions,
-): Promise<void> {
+export async function mount(directory: ShareDirectory, options: MountOptions): Promise<void> {
     // sudo mount -t cifs -o uid=$5,gid=$6,username="$__user",password="$__pass" "$1" "$2"
 
     if (await isMounted(directory)) {

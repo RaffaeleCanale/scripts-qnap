@@ -1,24 +1,24 @@
 {
-    "main": "./src/Main.ts",
     "type": "module",
+    "main": "./src/Main.ts",
     "scripts": {
         "build": "tsc",
         "start": "node src/Main.ts",
-        "lint": "eslint src --ext .ts"
-    },
-    "devDependencies": {
-        "@canale/eslint-config-wx": "^7.0.25",
-        "@types/node": "^22.20.2",
-        "@types/ping": "^0.4.4",
-        "@types/prompts": "^2.4.9",
-        "typescript": "^7.0.2",
-        "typescript-eslint": "^8.70.0"
+        "check": "vp check"
     },
     "dependencies": {
-        "@RaffaeleCanale/wx-secrets-manager": "^3.0.2",
+        "@RaffaeleCanale/wx-secrets-manager": "^3.2.1",
         "commander": "^15.0.0",
         "ping": "^1.0.0",
         "prompts": "^2.4.2",
-        "zod": "^4.6.1"
+        "zod": "^4.6.2"
+    },
+    "devDependencies": {
+        "@RaffaeleCanale/starter": "^3.0.0",
+        "@types/node": "^26.5.1",
+        "@types/ping": "^0.4.4",
+        "@types/prompts": "^2.4.9",
+        "typescript": "^7.0.2",
+        "vite-plus": "^0.3.1"
     }
 }

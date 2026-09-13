@@ -1,34 +1,22 @@
 import { exec, spawn } from 'child_process';
-import { useConfig } from '../config/QnapConfigReader.ts';
+
+import { useProperties } from '../config/WxSecrets.ts';
 import type { ShareDirectory } from '../services/QnapShares.ts';
 import type { MountOptions } from './MountUtils.ts';
 
 function executeCommand(command: string, cwd?: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        const child = exec(
-            command,
-            {
-                cwd,
-            },
-            (error, stdout, stderr) => {
-                if (error) {
-                    reject(
-                        new Error(
-                            `Command ${command} failed:\n${stderr}${stdout}`,
-                        ),
-                    );
-                } else {
-                    resolve(stdout);
-                }
-            },
-        );
+        exec(command, { cwd }, (error, stdout, stderr) => {
+            if (error) {
+                reject(new Error(`Command ${command} failed:\n${stderr}${stdout}`));
+            } else {
+                resolve(stdout);
+            }
+        });
     });
 }
 
-function executeInteractiveCommand(
-    command: [string, ...string[]],
-    cwd?: string,
-): Promise<void> {
+function executeInteractiveCommand(command: [string, ...string[]], cwd?: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const [cmd, ...args] = command;
         const shell = spawn(cmd, args, {
@@ -51,7 +39,7 @@ function addSudo(cond: boolean): [string] | [] {
 }
 
 function useShellConfig() {
-    return useConfig().shell;
+    return useProperties().getProperty('shell');
 }
 
 export const Shell = {
@@ -77,21 +65,13 @@ export const Shell = {
         async mkdir(directory: ShareDirectory): Promise<void> {
             const { prefixWithSudo, mkdirPath } = useShellConfig();
 
-            await executeInteractiveCommand([
-                ...addSudo(prefixWithSudo),
-                mkdirPath,
-                directory,
-            ]);
+            await executeInteractiveCommand([...addSudo(prefixWithSudo), mkdirPath, directory]);
         },
 
         async rmdir(directory: ShareDirectory): Promise<void> {
             const { prefixWithSudo, rmdirPath } = useShellConfig();
 
-            await executeInteractiveCommand([
-                ...addSudo(prefixWithSudo),
-                rmdirPath,
-                directory,
-            ]);
+            await executeInteractiveCommand([...addSudo(prefixWithSudo), rmdirPath, directory]);
         },
     },
 
@@ -116,15 +96,11 @@ export const Shell = {
 
     async umount(directory: ShareDirectory): Promise<void> {
         const { prefixWithSudo, umountPath } = useShellConfig();
-        return executeInteractiveCommand([
-            ...addSudo(prefixWithSudo),
-            umountPath,
-            directory,
-        ]);
+        return executeInteractiveCommand([...addSudo(prefixWithSudo), umountPath, directory]);
     },
 
     async getUidGid(): Promise<{ uid: string; gid: string }> {
-        const config = await useConfig();
+        const config = useProperties().getProperties();
         let { uid, gid } = config.shell;
 
         if (!uid) {
@@ -138,11 +114,9 @@ export const Shell = {
 };
 
 export async function exportSudoers(): Promise<string> {
-    const { mountDirectory, shell } = await useConfig();
+    const { mountDirectory, shell } = useProperties().getProperties();
     const { mkdirPath, rmdirPath, mountPath, umountPath } = shell;
-    const currentUser = (await executeCommand('whoami'))
-        .replaceAll('\n', '')
-        .trim();
+    const currentUser = (await executeCommand('whoami')).replaceAll('\n', '').trim();
 
     // <username> ALL=(ALL) NOPASSWD: /bin/mkdir /somewhere/that/requires/sudo
 

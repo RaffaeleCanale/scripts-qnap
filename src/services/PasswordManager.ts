@@ -1,4 +1,5 @@
 import { Secret } from '@RaffaeleCanale/wx-secrets-manager';
+
 import type { QnapConfig } from '../config/QnapConfig.ts';
 import { useSecrets } from '../config/WxSecrets.ts';
 
