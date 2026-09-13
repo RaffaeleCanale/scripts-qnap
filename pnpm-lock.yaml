@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@RaffaeleCanale/wx-secrets-manager':
-        specifier: ^3.2.1
-        version: 3.2.1
+        specifier: ^3.2.2
+        version: 3.2.2
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -50,8 +50,8 @@ packages:
     peerDependencies:
       vite-plus: '>=0.1.0'
 
-  '@RaffaeleCanale/wx-secrets-manager@3.2.1':
-    resolution: {integrity: sha512-mkzYfSD9tOZqc7/WZo7Bd9lmoJf4INgHjBS7HQU9FZWBmFHp2/1SH1zpjnbGO3S0KpdlJ7MCjmdXrR6CWs2QaQ==, tarball: https://npm.pkg.github.com/download/@RaffaeleCanale/wx-secrets-manager/3.2.1/fc33d7d51dad2a301830d1273df81db5e20b3d7e}
+  '@RaffaeleCanale/wx-secrets-manager@3.2.2':
+    resolution: {integrity: sha512-6hLNk9uIRhtouYD83PRBzb6LCLGLdVfxP3hd+t3Qm/AQnk0sEP6u0PiQgrVBLDiAZgtTdiI5O7TWDMFWozx+Nw==, tarball: https://npm.pkg.github.com/download/@RaffaeleCanale/wx-secrets-manager/3.2.2/589f127e375cd12716a89111f7562f19f420db17}
     hasBin: true
 
   '@babel/code-frame@7.29.7':
@@ -1532,7 +1532,7 @@ snapshots:
     dependencies:
       vite-plus: 0.3.1(@types/node@26.5.1)(typescript@7.0.2)
 
-  '@RaffaeleCanale/wx-secrets-manager@3.2.1':
+  '@RaffaeleCanale/wx-secrets-manager@3.2.2':
     dependencies:
       firebase: 12.19.0
       strip-json-comments: 5.0.3

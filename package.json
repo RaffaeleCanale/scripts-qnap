@@ -7,7 +7,7 @@
         "check": "vp check"
     },
     "dependencies": {
-        "@RaffaeleCanale/wx-secrets-manager": "^3.2.1",
+        "@RaffaeleCanale/wx-secrets-manager": "^3.2.2",
         "commander": "^15.0.0",
         "ping": "^1.0.0",
         "prompts": "^2.4.2",

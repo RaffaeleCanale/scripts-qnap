@@ -1,7 +1,8 @@
 import {
+    createPropertiesManager,
+    createSecretsManager,
+    define,
     loadAllFromKeyring,
-    usePropertiesManager,
-    useSecretsManager,
 } from '@RaffaeleCanale/wx-secrets-manager';
 
 import { QnapConfigSchema } from './QnapConfig.ts';
@@ -9,17 +10,19 @@ import { QnapConfigSchema } from './QnapConfig.ts';
 const APP_NAME = 'scripts-qnap';
 
 export async function loadConfig(withPassword: boolean) {
-    await loadAllFromKeyring('scripts-qnap', false);
+    const properties = useProperties();
+    const secrets = withPassword ? useSecrets() : undefined;
 
-    if (withPassword && useProperties().getProperty('qnapPassword') === undefined) {
-        await useSecrets().loadSecrets();
-    }
+    await loadAllFromKeyring(properties, secrets);
 }
 
-export function useProperties() {
-    return usePropertiesManager({ appName: APP_NAME }, { parser: QnapConfigSchema.parse });
-}
+export const useSecrets = define(() =>
+    createSecretsManager<'QNAP_PASSWORD'>({ appName: APP_NAME }),
+);
 
-export function useSecrets() {
-    return useSecretsManager<'QNAP_PASSWORD'>({ appName: APP_NAME });
-}
+export const useProperties = define(() =>
+    createPropertiesManager({
+        appName: APP_NAME,
+        parser: QnapConfigSchema.parse,
+    }),
+);
